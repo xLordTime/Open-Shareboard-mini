@@ -55,10 +55,11 @@ next-env.d.ts
 /outputs/
 /work/
 
-# Generated from pdfjs-dist during postinstall
+*.tsbuildinfo
+
+# Generated PDF.js assets in GitHub source distributions
 /public/pdf.worker.min.mjs
 /public/cmaps/
 /public/standard_fonts/
 /public/wasm/
 /public/shareboard-source.zip
-*.tsbuildinfo

@@ -1,70 +1,66 @@
 # Open Shareboard Mini
 
+Ein Open-Source-Shareboard für private Dateien, Freigaben, Präsentationen und PDF-Anmerkungen. Eigener Anwendungscode: MIT-Lizenz.
+
 **Live:** https://open-share-board.lord-time.chatgpt.site
 
-**Quellcode:** https://github.com/xLordTime/Open-Shareboard-mini
+**Repository:** https://github.com/xLordTime/Open-Shareboard-mini
 
-Ein Open-Source-Shareboard für private Dateibibliotheken, Freigabelinks und PDF-Anmerkungen. Eigener Anwendungscode: MIT-Lizenz. Abhängigkeiten behalten ihre jeweiligen Lizenzen.
+## Start und Entwicklung
 
-## Funktionen
-
-- Dauerhafte Datei-Uploads in Cloudflare R2, maximal 25 MB pro Datei und 500 Dateien je Konto.
-- Persönliche Bibliothek, Suche, Typfilter, Sortierung, Favoriten, Kachel- und Listenansicht.
-- Einzeldateien über kryptografisch zufällige Links teilen und Freigaben widerrufen.
-- PDF-Seiten rendern, zoomen, im Vollbild präsentieren und mit Maus, Stift oder Finger kommentieren.
-- Farben, Strichstärke, Textmarker, Rückgängig; PDF-Export mit eingebrannten Anmerkungen.
-- Export als neue Datei im Board speichern; das Original bleibt unverändert.
-- Bild-, Video-, Audio- und Textvorschau; andere Formate als Download.
-- Responsive deutsche Oberfläche und reduzierte Animationen bei entsprechendem Betriebssystemwunsch.
-
-## Start auf ChatGPT Sites
-
-Node.js >=22.13.0 und pnpm erforderlich. Die App basiert auf React, Vinext und dem Sites-Starter.
+Node.js >=22.13.0 und pnpm.
 
 ```bash
 pnpm install
-# postinstall erzeugt automatisch die lokalen PDF.js-Assets.
-pnpm dev
-pnpm exec tsc --noEmit
-node --test tests/api.test.mjs
+# postinstall erzeugt lokale PDF.js-Assets
+pnpm typecheck
+pnpm test
 pnpm build
+pnpm dev
 ```
 
-Ein neues Sites-Projekt registrieren und seine eigene Identität in `.openai/hosting.json` eintragen. `r2` auf `BUCKET` setzen, `d1` bleibt `null`. Der Sites-Build provisioniert R2; es werden keine Datenbankmigrationen benötigt. Vor dem Veröffentlichen den exakten Quellcode in das zum Projekt gehörende Quellrepository pushen. Für anonyme Freigabelinks muss die Site öffentliche Besucher zulassen. Die API schützt private Dateien unabhängig von dieser Plattformfreigabe.
+Für lokales D1 die Drizzle-Migrationen vor dem Start auf die lokale Datenbank anwenden. Sites wendet die Migrationen beim Veröffentlichen auf die gehostete Datenbank an. `.openai/hosting.json` deklariert `DB` und `BUCKET`; ein eigenes Sites-Projekt braucht seine eigene Projektidentität.
 
-## Identität und eigenes Hosting
+## Eigenes Hosting
 
-Die gehostete Version verwendet die von Sites geprüften `oai-authenticated-user-id`- und E-Mail-Header. Ein unabhängiger Host muss `app/chatgpt-auth.ts` durch eine echte serverseitige Sitzung ersetzen. Niemals beliebige, von Besuchern gesendete Identitätsheader vertrauen. Verfügbarkeit von R2 über `cloudflare:workers` und eine serverseitige `BUCKET`-Binding sicherstellen. Die App ist kein sofort startbares Docker-Paket: Authentifizierung und Worker-Konfiguration müssen für die eigene Infrastruktur angepasst werden.
-
-## Datenschutz und Freigaben
-
-Die API listet nur Dateien des angemeldeten Kontos. Lesen, Ändern und Löschen werden serverseitig geprüft. Schreiben erfordert dieselbe Origin. Eine Freigabe gewährt jedem mit dem Link Lese- und Downloadzugriff auf genau eine Datei; sie enthält keine Kontoidentität. Nach einem Widerruf sind alte Tokens ungültig. Bereits heruntergeladene Kopien können nicht zurückgerufen werden.
-
-PDF-Anmerkungen befinden sich während der Sitzung im Speicher des Browsers. Vor Schließen/Neuladen exportieren oder als neue PDF im Board speichern. Geteilte Besucher dürfen lokal kommentieren und exportieren, aber nicht in die Bibliothek des Besitzers schreiben. Geschützte oder beschädigte PDFs können Vorschau oder Export verhindern. PDF-Formulare, digitale Signaturen und interaktive Elemente sind keine zugesicherten Exportfunktionen. Eingebrannte Anmerkungen werden nicht als editierbare PDF-Kommentarobjekte gespeichert.
+Die App basiert auf React, Vinext und Cloudflare Workers mit R2 und D1. Ein unabhängiger Host muss `app/chatgpt-auth.ts` durch eine echte serverseitige Sitzung ersetzen und die Speicherbindungen bereitstellen. Die von Sites authentifizierten Identitätsheader sind außerhalb dieser Plattform **keine** zuverlässige Anmeldung. Es gibt noch kein fertiges Docker-Paket. Geheimnisse gehören ausschließlich in serverseitige Umgebungsvariablen.
 
 ## Formate
 
-PDF, PNG, JPEG, GIF, WebP, MP4, WebM, MP3, WAV und TXT/MD: Vorschau abhängig vom Browser-Codec. PowerPoint und Office: Upload, Download und Freigabe; für Folienpräsentation zunächst als PDF exportieren. SVG/HTML werden aus Sicherheitsgründen als Download ausgeliefert. Es erfolgt keine Office-Konvertierung, Virenprüfung oder gemeinsame Echtzeitbearbeitung.
+PDF, PNG, JPEG, GIF, WebP, MP4, WebM, MP3, WAV und TXT/MD: direkte Vorschau, bei Medien abhängig vom Browser-Codec. DOCX und PPTX: Text-Inhaltsvorschau. XLSX, CSV und ZIP: Download. DOC, PPT, SVG, HTML und ausführbare Dateien sind keine zugelassenen Uploadformate. Für exaktes Office-Layout als PDF exportieren. Keine gemeinsame Echtzeitbearbeitung und keine automatische Office-zu-PDF-Konvertierung.
 
-## Grenzen der ersten Version
+## Version 0.2: Arbeitsbereiche und Sicherheit
 
-Keine Upload-Rate-Begrenzung oder Gesamtspeicherquote, keine administrativen Kontoverwaltung, keine Link-Ablaufzeiten oder Passwörter. Vor einem größeren öffentlichen Mehrbenutzerbetrieb entsprechende Quoten und Missbrauchsschutz ergänzen. Dateianzahl-Limit ist kein atomarer Quotenmechanismus bei parallelen Uploads. R2-Metadaten und Freigaben werden getrennt gespeichert, ohne Transaktionen. Kein automatischer Dateiversionsverlauf.
+Live: https://open-share-board.lord-time.chatgpt.site
+Quellcode: https://github.com/xLordTime/Open-Shareboard-mini
 
-## Verifikation
+- PDF-Anmerkungen und private Referentennotizen werden automatisch serverseitig gespeichert, mit atomarem Versionsvergleich. Konflikte überschreiben keine neueren Entwürfe. Bei Verbindungsfehlern wird nach Möglichkeit ein Sitzungsspeicher-Entwurf gesichert; PDF-Export ist die zusätzliche Sicherung.
+- Linien, Pfeile, Rahmen, Textnotizen, Radierer und Verschieben; Rückgängig/Wiederholen. Textnotizen im PDF-Export verwenden Helvetica: Zeichen außerhalb des unterstützten lateinischen Zeichensatzes werden durch `?` ersetzt.
+- Ordner, Verschieben, Umbenennen, Löschen leerer Ordner und widerrufbare Sammlungslinks. Sammlungen enthalten **auch zukünftig hinzugefügte Dateien** im Ordner. Herausgeschobene Dateien verlieren den Zugriff über dessen Link.
+- Links mit Ablaufdatum. Neu erstellte Links in der Oberfläche gelten standardmäßig sieben Tage. Die API unterstützt optional unbefristete Links; die Oberfläche setzt ein Datum. Vorhandene unbefristete Links bleiben bis Widerruf gültig.
+- Präsentationsansicht mit Anpassung an die Bildschirmhöhe, Seitennavigation, Laserpointer und privaten Referentennotizen. Die Seitenübersicht ist eine beschriftete Navigationsliste, keine gerenderte Thumbnail-Galerie.
+- DOCX/PPTX: lokale Text-Inhaltsvorschau ohne Dateiübermittlung an Drittanbieter. Word-Absätze/Überschriften bzw. PowerPoint-Folientexte. Bilder, Diagramme, Animationen und exaktes Layout werden nicht rekonstruiert. DOC/PPT/ODT/ODP sind keine Vorschauformate.
+- Upload-Fortschritt, Warteschlange und Abbruch; Abbruch nach vollständiger Übertragung kann die bereits serverseitig laufende Speicherung nicht rückgängig machen.
+- Limit: 25 MB pro Datei, 500 Dateien, insgesamt 1 GB. Quotenreservierung in D1 ist atomar. Bestandsdateien werden vor weiteren Uploads in die Quotenliste übernommen. Die vorhandenen R2-Daten werden nicht verschoben oder gelöscht.
 
-Typprüfung und Produktionsbuild. API-Tests prüfen Kontotrennung, anonyme Zugriffsverweigerung, Dateispeicherung, Tokenfreigaben, Widerruf, Cross-Origin-Schutz und Löschbereinigung mit einem R2-Testdouble. Sie ersetzen keinen echten Browser-/Stift-Test und keinen Test gegen produktives R2.
+### Betrieb und Konfiguration
+
+`.openai/hosting.json`: `d1: "DB"`, `r2: "BUCKET"`. Migrationen in `drizzle/` werden vom Sites-Deployment angewendet. Für eigenes Hosting dieselben Migrationen vor dem Start anwenden.
+
+`BOARD_OWNER_EMAIL` als serverseitige Umgebungsvariable konfigurieren. Ohne sie bleiben Bibliothek und Schreiboperationen gesperrt. Nur das von der Plattform authentifizierte Besitzerkonto darf Dateien, Ordner und Anmerkungen verwalten. Freigabelinks bleiben anonym lesbar. Nie die Identitätsheader im unabhängigen Hosting ungeprüft von Browsern übernehmen.
+
+Serverseitig geprüft: Eigentümerschaft, Same-Origin-Schreiben, begrenzte Anfragegrößen, Anmerkungsschema, erlaubte Dateiendungen und ausgewählte Dateisignaturen. Ausführbare Dateien und aktive HTML/SVG-Dateien sind nicht zugelassen. Schreiblimits: 20 Uploadversuche/Stunde, 200 Verwaltungsanfragen/Minute, 120 Anmerkungsspeicherungen/Minute. Office-ZIP-Verzeichnisse haben Größen-, Eintrags- und Entpackgrenzen; nur ausgewählte XML-Teile werden extrahiert, DTDs/Entities werden abgewiesen.
+
+Geteilte Besucher sehen **keine** gespeicherten Anmerkungen oder Referentennotizen. Um Zeichnungen zu teilen, eine neue PDF mit Anmerkungen exportieren und diese Datei freigeben. Lokale Anmerkungen eines geteilten Besuchers werden nicht in die Besitzerbibliothek geschrieben.
+
+HTTP-Schutz: `nosniff`, `no-referrer`, eingeschränkte Content Security Policy, keine Plugin-/Objekt-Einbettungen und eingeschränkte Browser-Berechtigungen. Framework-Inlineskripte benötigen aktuell `unsafe-inline`; es besteht keine vollständige nonce-basierte CSP. Keine automatische Virenprüfung, keine DDoS-Garantie, keine Inhaltsverschlüsselung mit einem vom Nutzer gehaltenen Schlüssel. Links sind Zugriffstokens: wer sie erhält, darf die Datei lesen und herunterladen; bereits heruntergeladene Kopien bleiben erhalten.
+
+### Aktueller Prüfumfang
+
+13 automatisierte Tests prüfen reale SQLite-Quota- und Versionsabfragen mit einem D1-Adapter sowie R2-Testdouble: Kontotrennung, Freigaben, Ablauf und Widerruf, Sammlungszugehörigkeit, private Notizen, Versionskonflikte, Quoten, Schreiblimits, Dateitypen, Origin-Prüfung, ZIP-Entpackgrenzen und Löschbereinigung. Zusätzlich Typprüfung und Produktionsbuild. Ein praktischer Browser-/Stift-Test und ein unabhängiges Security-Audit stehen aus.
+
+Die Angaben in diesem Abschnitt ersetzen abweichende Grenzen der ersten Version weiter oben.
 
 ## Credits
 
-- React / React DOM: Meta und Mitwirkende (MIT).
-- Vinext und Cloudflare Workers/R2: Cloudflare und Mitwirkende; Lizenzen siehe Pakete.
-- PDF.js: Mozilla und Mitwirkende (Apache-2.0).
-- pdf-lib: Andrew Dillon und Mitwirkende (MIT).
-- Lucide: Lucide-Mitwirkende (ISC).
-- DM Sans und Manrope: Schrift-Autoren, Open Font License; geladen über Google Fonts.
-
-Siehe `THIRD_PARTY_NOTICES.md` und paketbezogene Lizenzdateien. PDF.js Worker, Zeichentabellen, Standardschriften und WASM-Dateien werden lokal bereitgestellt; Vorschauen senden keine Dateibytes an einen externen Viewer.
-
-## GitHub und Quellcode-Download
-
-Die Sites-Version bietet einen Quellcode-ZIP-Download. Im Repository verweist die Oberfläche auf das öffentliche GitHub-Archiv. GitHub-Releases können später für feste Versionen ergänzt werden.
+React (Meta/MIT), Vinext und Cloudflare, Mozilla PDF.js (Apache-2.0), pdf-lib (Andrew Dillon/MIT), fflate (Arjun Barrett/MIT), Lucide (ISC), DM Sans und Manrope (Open Font License). Paketlizenzen bleiben bestehen. Siehe `THIRD_PARTY_NOTICES.md`, `public/PDFJS-LICENSE.txt` und die Lizenzdateien des Sites-Starter-Builds. PDF.js-Assets werden lokal bereitgestellt, Dateien nicht an externe Viewer übertragen. Schriftarten kommen von Google Fonts.

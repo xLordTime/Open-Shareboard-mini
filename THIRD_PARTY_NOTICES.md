@@ -10,3 +10,5 @@ React: https://github.com/facebook/react (MIT).
 Vinext: https://github.com/cloudflare/vinext.
 
 Exact package versions are pinned in pnpm-lock.yaml. Retain upstream notices when redistributing packaged dependencies. Assets are delivered unmodified.
+
+fflate: https://github.com/101arrowz/fflate (MIT); used for bounded client-side Office ZIP parsing.

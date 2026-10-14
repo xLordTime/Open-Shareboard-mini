@@ -1,0 +1,3 @@
+import {NextResponse} from 'next/server';
+export function middleware(){const r=NextResponse.next();r.headers.set('Referrer-Policy','no-referrer');r.headers.set('X-Content-Type-Options','nosniff');r.headers.set('Permissions-Policy','camera=(), microphone=(), geolocation=()');r.headers.set('Content-Security-Policy',"default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self' https://chatgpt.com");return r}
+export const config={matcher:['/((?!api/|_next/|assets/).*)']};
